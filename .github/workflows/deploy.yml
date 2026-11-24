@@ -26,11 +26,13 @@ jobs:
       - name: Enable GitHub Pages
         uses: actions/configure-pages@v5
         with:
-          enablement: true
+          enablement: false
       - name: Upload static website
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
+      - name: Wait for artifact registration
+        run: sleep 25
       - name: Publish website
         id: deployment
         uses: actions/deploy-pages@v4
