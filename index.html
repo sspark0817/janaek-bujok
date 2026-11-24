@@ -214,13 +214,13 @@ textarea{width:100%;border:1px solid var(--pill-line);border-radius:10px;backgro
         <button type="button" class="pill" data-go="cond" id="chipBudget"></button>
         <button type="button" class="pill" data-go="cond" id="chipFree"></button>
       </div>
-      <div class="row"><button class="btn small" id="gpsButton">현재 위치로 추천</button><button class="btn ghost small" id="gpsReset">기존 위치</button></div><select class="txt" id="gpsDest"><option value="same">현재 위치로 복귀</option><option value="science">자연과학관</option><option value="b1">원효관</option><option value="b2">진흥관</option><option value="b3">도서관</option><option value="b4">학생회관</option><option value="b5">문무관</option><option value="b6">에너지공학관</option><option value="b7">100주년기념관</option><option value="b8">조형관</option><option value="b9">영산관</option><option value="b10">한의학관</option><option value="b11">의학관</option><option value="b12">산학협력관</option><option value="b13">선센터</option><option value="b14">정각원</option><option value="b15">백상관</option></select><p class="help" id="gpsStatus">자연과학대 조사 기준</p><div class="cats" id="cats" role="tablist" aria-label="음식 종류"></div>
+      <p class="help">출발·복귀: 동국대학교 자연과학관 (고정)</p><div class="cats" id="cats" role="tablist" aria-label="음식 종류"></div>
     </header>
     <section class="sec pad"><div class="resulthead" id="resultHead"><h2 class="count" id="resultCount"></h2><label class="selwrap"><span style="position:absolute;left:-9999px">정렬</span>
         <select id="sort">
           <option value="revisit">재방문 횟수 순</option>
           <option value="visits">내 방문 횟수 순</option>
-          <option value="distance">거리 순</option>
+          <option value="distance">이동시간순</option>
           <option value="slack">여유 시간순</option>
           <option value="price">낮은 가격순</option>
           <option value="rating">별점 순</option>
@@ -265,7 +265,7 @@ textarea{width:100%;border:1px solid var(--pill-line);border-radius:10px;backgro
         </div>
         <div class="field">
           <span class="lbl">출발 위치</span>
-          <div class="fixed"><b>동국대학교 자연과학대</b><span>고정</span></div>
+          <div class="fixed"><b>동국대학교 자연과학관</b><span>고정</span></div>
         </div>
       </div>
       <div class="block">
@@ -305,8 +305,8 @@ var esc=function(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':
 var won=function(n){return Number(n).toLocaleString('ko-KR')+'원'};
 var norm=function(s){return String(s).toLowerCase().replace(/\s+/g,'')};
 var BUF=5; /* 고정 여유(분) */
-var STORE='janaek-integrated-v1'; var gpsRoutes=null,gpsExpiry=0;
-var ORIGINS=[{id:'nat',name:'자연과학대'}];
+var STORE='janaek-integrated-v1'; 
+var ORIGINS=[{id:'nat',name:'자연과학관'}];
 var CUISINES=['한식','분식','일식','중식','양식','간편식'];
 var ICON={'한식':'🍚','분식':'🍢','일식':'🍱','중식':'🥟','양식':'🍽️','간편식':'🥪'};
 
@@ -359,7 +359,7 @@ function stats(r){
     revisit:r.reviews.filter(function(x){return x.revisit}).length/n};
 }
 function evaluate(r,c){
-  var g=gpsRoutes&&Date.now()<gpsExpiry?gpsRoutes[r.id]:null; var unknown=c.origin==='gps'&&!g; var walk=c.origin==='gps'?(g?g.out.minutes:0):r.dist.nat||0,dist=c.origin==='gps'?(g?g.out.meters:Infinity):walk; var round=c.origin==='gps'?(g?g.out.minutes+g.back.minutes:0):walk*2;
+  var unknown=false; var walk=r.dist.nat||0,dist=walk; var round=walk*2;
   var total=round+r.wait+r.meal+BUF,slack=c.free-total;
   var on=r.menus.filter(function(m){return m.status==='on'});
   var within=on.filter(function(m){return m.price<=c.budget}).sort(function(a,b){return a.price-b.price});
@@ -419,7 +419,7 @@ function renderHome(){
   $('#cats').innerHTML=cats.map(function(c){
     return '<button type="button" role="tab" class="cat" data-cat="'+esc(c.k)+'" aria-selected="'+(cond.cat===c.k)+'"><span class="ci" aria-hidden="true">'+c.icon+'</span><span>'+(c.k||'전체')+'</span></button>';
   }).join('');
-  var host=$('#homeList'),foot='<p class="foot">메뉴와 가격은 제공된 엑셀 자료 기준이고, 도보 시간은 동국대학교 자연과학대에서 각 식당까지 걸리는 편도 시간입니다. 재방문 횟수는 예시 값이며 식당 관리에서 수정할 수 있습니다. GPS 경로: © OpenStreetMap contributors.</p>';
+  var host=$('#homeList'),foot='<p class="foot">메뉴와 가격은 제공된 엑셀 자료 기준이고, 도보 시간은 동국대학교 자연과학관에서 각 식당까지 걸리는 편도 시간입니다. 재방문 횟수는 예시 값이며 식당 관리에서 수정할 수 있습니다.</p>';
   $('#resultHead').hidden=cond.budget<=0||cond.free<=0;
   if(cond.budget<=0||cond.free<=0){
     host.innerHTML='<div class="empty"><b>예산과 공강 시간을 입력해 주세요</b>두 값이 있어야 갈 수 있는 식당을 계산할 수 있어요.</div>'+foot;return;
@@ -427,7 +427,7 @@ function renderHome(){
   var list=allEval(),ok=list.filter(function(x){return x.e.ok}),out=list.filter(function(x){return !x.e.ok});
   ok.sort(sorter());
   $('#resultCount').textContent='조건에 맞는 식당 '+ok.length+'곳';
-  var html='<p class="subline">예산 '+won(cond.budget)+' · 공강 '+cond.free+'분 · '+(cond.origin==='gps'?'GPS 현재 위치':'자연과학대')+'에서 출발</p>';
+  var html='<p class="subline">예산 '+won(cond.budget)+' · 공강 '+cond.free+'분 · '+'자연과학관'+'에서 출발</p>';
   if(!ok.length)html+='<div class="empty"><b>조건에 맞는 식당이 없어요</b>예산을 올리거나 공강 시간을 늘려 보세요.</div>';
   html+=ok.map(function(x){return itemHtml(x.r,x.e)}).join('');
   if(out.length)html+='<details class="out"><summary>조건에 맞지 않는 식당 '+out.length+'곳</summary><ul>'+
@@ -526,7 +526,7 @@ function renderDetail(){
     '<div class="dbody pad">'+
     '<div class="dtop"><p>'+esc(r.cuisine)+' · '+esc(r.note)+'</p><span class="big '+(e.slack>=0?'ok':'no')+'">'+(e.slack>=0?'여유 '+e.slack+'분':(-e.slack)+'분 부족')+'</span></div>'+
     '<div class="block"><h3>시간 계산</h3><div class="bars">'+timeBar(r,e,cond.free)+legend(r,e)+'</div>'+
-    '<dl class="kv"><div><dt>'+(cond.origin==='gps'?'현재 위치에서 도보(편도)':'자연과학대에서 도보(편도)')+'</dt><dd>'+e.walk+'분</dd></div><div><dt>왕복 이동</dt><dd>'+e.round+'분</dd></div>'+
+    '<dl class="kv"><div><dt>'+'자연과학관에서 도보(편도)'+'</dt><dd>'+e.walk+'분</dd></div><div><dt>왕복 이동</dt><dd>'+e.round+'분</dd></div>'+
     '<div><dt>조리·대기</dt><dd>'+r.wait+'분</dd></div><div><dt>식사</dt><dd>'+r.meal+'분</dd></div><div><dt>예비 시간</dt><dd>'+e.buf+'분</dd></div>'+
     '<div><dt>총 소요</dt><dd>'+e.total+'분</dd></div><div><dt>공강 '+cond.free+'분 대비</dt><dd>'+slackTxt+'</dd></div></dl></div>'+
     '<div class="block"><h3>메뉴 · 가격 · 남는 예산 (예산 '+won(cond.budget)+')</h3><div class="tablewrap"><table><thead><tr><th>메뉴</th><th class="num">가격</th><th class="num">남는 예산</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
@@ -690,9 +690,9 @@ ownerHost.addEventListener('click',function(e){
   }
 });
 
-$('#gpsReset').onclick=function(){gpsRoutes=null;cond.origin='nat';$('#gpsStatus').textContent='자연과학대 조사 기준';renderHome()};
-$('#gpsDest').onchange=function(){$('#gpsReset').click()};
-$('#gpsButton').onclick=async function(){if(location.hostname.endsWith('github.io')){$('#gpsStatus').textContent='웹 시연판은 조사 기준 이동시간 사용 · GPS 도보 경로는 로컬 Python 서버 필요';return;}this.disabled=true;try{if(!navigator.geolocation)throw Error('위치 기능 미지원');var st=await fetch('/api/status').then(r=>r.json());if(!st.ready)throw Error('지도 준비 필요');var p=await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,timeout:20000}));var ids=data.filter(r=>st.places.includes(r.id)).map(r=>r.id);var response=await fetch('/api/routes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lat:p.coords.latitude,lon:p.coords.longitude,dest:$('#gpsDest').value,ids:ids})});var result=await response.json();if(!response.ok||!Object.keys(result.routes||{}).length)throw Error(result.error||'경로 없음');gpsRoutes=result.routes;gpsExpiry=Date.now()+300000;cond.origin='gps';$('#gpsStatus').textContent='GPS 경로 '+Object.keys(gpsRoutes).length+'곳 · 위치 오차 약 '+Math.round(p.coords.accuracy)+'m';renderHome();setTimeout(function(){if(Date.now()>=gpsExpiry&&cond.origin==='gps'){$('#gpsReset').click();$('#gpsStatus').textContent='GPS 만료 · 기존 위치 기준으로 복귀'}},300100)}catch(e){$('#gpsStatus').textContent='GPS 실패: '+(e.message||'권한 확인')+' · 기존 위치 사용'}finally{this.disabled=false}};
+
+
+
 renderHome();
 })();
 </script>
